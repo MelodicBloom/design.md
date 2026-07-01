@@ -1,0 +1,35 @@
+# Maintains a rolling draft GitHub Release that is updated on every push
+# to main and on every opened/edited/labeled/unlabeled pull request.
+#
+# The draft is promoted to a real release when the publish workflow fires
+# on a v* tag push — at that point GitHub converts the draft automatically
+# if the tag matches the resolved version, or you can do it manually from
+# the Releases page.
+
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - edited
+      - labeled
+      - unlabeled
+      - synchronize
+
+permissions:
+  contents: write       # create/update the draft release
+  pull-requests: write  # read PR metadata; write labels back if needed
+
+jobs:
+  update-release-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

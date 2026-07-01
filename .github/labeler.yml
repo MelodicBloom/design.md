@@ -1,0 +1,58 @@
+# Automatic PR label rules — evaluated by the PR labeler action in label.yml.
+# Labels are applied based on:
+#   1. PR title prefix  (conventional commit type)
+#   2. Files changed    (path-based labels for scope context)
+#
+# All labels referenced here must exist in the repository.
+# Run `bun run .github/scripts/sync-labels.ts` to create/sync them.
+
+# ── Conventional commit type → label ──────────────────────────────────
+# Matches the PR title prefix. Both bare (feat:) and scoped (feat(linter):)
+# forms are matched by the head-branch / title rules below.
+
+feat:
+  - head-branch: ['^feat/', '^feature/']
+  - title: ['^feat(\\([^)]+\\))?:', '^feature:']
+
+fix:
+  - head-branch: ['^fix/', '^bugfix/', '^bug/']
+  - title: ['^fix(\\([^)]+\\))?:', '^bugfix:']
+
+docs:
+  - head-branch: ['^docs/']
+  - title: ['^docs(\\([^)]+\\))?:']
+
+chore:
+  - head-branch: ['^chore/']
+  - title: ['^chore(\\([^)]+\\))?:']
+
+refactor:
+  - head-branch: ['^refactor/']
+  - title: ['^refactor(\\([^)]+\\))?:']
+
+perf:
+  - head-branch: ['^perf/']
+  - title: ['^perf(\\([^)]+\\))?:']
+
+test:
+  - head-branch: ['^test/']
+  - title: ['^test(\\([^)]+\\))?:']
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/workflows/**', 'turbo.json', '.eslintrc*']
+
+build:
+  - changed-files:
+    - any-glob-to-any-file: ['packages/cli/package.json', 'package.json', 'tsconfig*.json', 'bun.lock']
+
+deps:
+  - changed-files:
+    - any-glob-to-any-file: ['packages/cli/package.json', 'bun.lock']
+
+release:
+  - head-branch: ['^release/']
+  - title: ['^release:']
+
+breaking:
+  - title: ['^feat!:', '^fix!:', '^[a-z]+!:', '^[a-z]+\\([^)]+\\)!:']

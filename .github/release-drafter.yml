@@ -1,0 +1,102 @@
+# Release Drafter configuration
+# Docs: https://github.com/release-drafter/release-drafter
+#
+# Strategy
+# --------
+# Primary signal:  PR labels (applied automatically by .github/labeler.yml)
+# Fallback signal: commit message prefix on squash-merged PRs whose title
+#                  matches conventional commit format (feat:, fix:, etc.)
+#
+# Version bump rules (semver)
+# ---------------------------
+#   breaking   → major
+#   feat        → minor
+#   fix / perf  → patch   (default)
+#
+# The custom `release:` commit type (version-bump PRs) is excluded from
+# the changelog via the `exclude-labels` list so it never appears as a
+# changelog entry — it IS the release.
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+# Exclude pure release/housekeeping PRs from appearing in the changelog
+exclude-labels:
+  - 'release'
+  - 'skip-changelog'
+
+# Version resolution — highest label wins
+version-resolver:
+  major:
+    labels:
+      - 'breaking'
+      - 'breaking-change'
+      - 'semver:major'
+  minor:
+    labels:
+      - 'feat'
+      - 'feature'
+      - 'enhancement'
+      - 'semver:minor'
+  patch:
+    labels:
+      - 'fix'
+      - 'bug'
+      - 'bugfix'
+      - 'perf'
+      - 'performance'
+      - 'semver:patch'
+  default: patch
+
+categories:
+  - title: '🚨 Breaking Changes'
+    labels:
+      - 'breaking'
+      - 'breaking-change'
+      - 'semver:major'
+
+  - title: '✨ New Features'
+    labels:
+      - 'feat'
+      - 'feature'
+      - 'enhancement'
+
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bug'
+      - 'bugfix'
+
+  - title: '⚡ Performance'
+    labels:
+      - 'perf'
+      - 'performance'
+
+  - title: '📖 Documentation'
+    labels:
+      - 'docs'
+      - 'documentation'
+
+  - title: '🧹 Maintenance'
+    labels:
+      - 'chore'
+      - 'refactor'
+      - 'ci'
+      - 'build'
+      - 'deps'
+      - 'dependencies'
+
+  - title: '🧪 Tests'
+    labels:
+      - 'test'
+      - 'tests'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/MelodicBloom/design.md/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
