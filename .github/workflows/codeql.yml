@@ -1,0 +1,49 @@
+# CodeQL semantic code analysis.
+# Catches prototype pollution, unsafe eval, SSRF via user-controlled fetch URLs,
+# and other vulnerabilities that pattern-matchers like DevSkim miss.
+#
+# Runs on: push to main, all PRs targeting main, weekly Monday scan.
+# Language: javascript-typescript (covers all .ts and .js in the repo).
+#
+# Docs: https://docs.github.com/en/code-security/code-scanning/using-codeql-code-scanning
+name: CodeQL
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  schedule:
+    - cron: '27 3 * * 1'  # Weekly Monday at 03:27 UTC (offset from DevSkim to avoid contention)
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # Use the default query suite which includes security-extended
+          # queries for JS/TS: prototype pollution, path injection, ReDoS,
+          # unsafe deserialization, DOM-based XSS, etc.
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+        # CodeQL autobuild handles Node/TS projects without custom build steps.
+        # It runs npm/bun install and resolves imports for the analysis graph.
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'

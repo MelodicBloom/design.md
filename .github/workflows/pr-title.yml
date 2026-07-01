@@ -1,0 +1,44 @@
+# Validates that all PR titles follow the Conventional Commits spec.
+# This ensures the auto-labeler (label.yml) always has a parseable title
+# to work from, and that release-drafter can resolve the correct semver bump.
+#
+# Recognized types: feat, fix, docs, chore, refactor, perf, test, ci, build, release
+# Scoped form is allowed: feat(linter):, fix(cli):
+# Breaking changes use !: feat!:, fix(parser)!:
+#
+# Docs: https://github.com/amannn/action-semantic-pull-request
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+  statuses: write
+
+jobs:
+  lint-pr-title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            perf
+            test
+            ci
+            build
+            release
+          requireScope: false
+          subjectPattern: ^.{1,72}$
+          subjectPatternError: |
+            The subject of the PR title must be between 1 and 72 characters.
+            Found: "${subject}"
