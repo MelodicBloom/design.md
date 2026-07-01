@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -8,8 +9,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
-    "types": ["bun"],
-    "jsx": "react-jsx"
+    "types": ["bun"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
