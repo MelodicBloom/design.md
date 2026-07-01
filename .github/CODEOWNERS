@@ -1,0 +1,17 @@
+# CODEOWNERS — paths requiring mandatory human review before merge
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Format specification — source of truth for the DESIGN.md format
+docs/spec.md @MelodicBloom
+
+# Lint rule config — changes here affect all downstream consumers
+packages/cli/src/linter/spec-config.yaml @MelodicBloom
+
+# Public API surface — changes here are semver-breaking
+packages/cli/src/linter/index.ts @MelodicBloom
+packages/cli/src/linter/lint.ts @MelodicBloom
+packages/cli/src/linter/tailwind/spec.ts @MelodicBloom
+packages/cli/src/linter/tailwind/v4/spec.ts @MelodicBloom
+
+# CI/CD pipeline — changes here affect all build and release flows
+.github/workflows/ @MelodicBloom

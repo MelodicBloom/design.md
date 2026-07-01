@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { defineCommand } from 'citty';
-import { lint, TailwindEmitterHandler, TailwindV4EmitterHandler, serializeTailwindV4 } from '../linter/index.js';
+import { lint, serializeTailwindV4 } from '../linter/index.js';
 import { DtcgEmitterHandler } from '../linter/dtcg/handler.js';
 import { readInput } from '../utils.js';
 
@@ -53,8 +53,8 @@ export default defineCommand({
     const report = lint(content);
 
     if (format === 'css-tailwind') {
-      const handler = new TailwindV4EmitterHandler();
-      const result = handler.execute(report.designSystem);
+      // Use pre-computed v4 result from LintReport — no need to re-run the handler
+      const result = report.tailwindV4Config;
 
       if (!result.success) {
         console.error(JSON.stringify({ error: result.error.message }));
@@ -64,8 +64,8 @@ export default defineCommand({
 
       console.log(serializeTailwindV4(result.data.theme));
     } else if (format === 'json-tailwind' || format === 'tailwind') {
-      const handler = new TailwindEmitterHandler();
-      const result = handler.execute(report.designSystem);
+      // Use pre-computed v3 result from LintReport — no need to re-run the handler
+      const result = report.tailwindConfig;
 
       if (!result.success) {
         console.error(JSON.stringify({ error: result.error.message }));
