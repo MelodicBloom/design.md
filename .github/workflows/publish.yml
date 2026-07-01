@@ -1,7 +1,11 @@
 # Publishes @google/design.md to npm via Wombat Dressing Room on version tags.
 # Trigger: push of a tag matching v* (e.g. v0.3.1, v1.0.0)
 # Required secret: NPM_TOKEN (Wombat Dressing Room auth token)
-
+#
+# Guards:
+#  - Tag must match packages/cli/package.json "version" (e.g. tag v0.4.0 → version 0.4.0)
+#  - bun install uses --frozen-lockfile to guarantee lockfile parity with test runs
+#  - npm publish --provenance emits SLSA Build Level 2 attestation on the npm page
 name: Publish
 
 on:
@@ -11,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # required for --provenance OIDC attestation
 
 jobs:
   publish:
@@ -28,7 +33,19 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG_VERSION}."
+            echo "::error::Bump the version field in packages/cli/package.json to ${TAG_VERSION} before tagging."
+            exit 1
+          fi
+          echo "Version check passed: ${PKG_VERSION}"
+        working-directory: packages/cli
 
       - name: Build
         run: bun run build
@@ -45,7 +62,7 @@ jobs:
           registry-url: https://wombat-dressing-room.appspot.com
 
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --provenance
         working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
