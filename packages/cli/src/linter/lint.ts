@@ -17,10 +17,12 @@ import type { ParsedDesignSystem } from './parser/spec.js';
 import { ModelHandler } from './model/handler.js';
 import { runLinter } from './linter/runner.js';
 import { TailwindEmitterHandler } from './tailwind/handler.js';
+import { TailwindV4EmitterHandler } from './tailwind/v4/handler.js';
 import type { DesignSystemState } from './model/spec.js';
 import type { Finding } from './linter/spec.js';
 import type { LintRule } from './linter/rules/types.js';
 import type { TailwindEmitterResult } from './tailwind/spec.js';
+import type { TailwindV4EmitterResult } from './tailwind/v4/spec.js';
 
 export interface LintOptions {
   /** Custom lint rules. Defaults to DEFAULT_RULES if omitted. */
@@ -34,8 +36,17 @@ export interface LintReport {
   findings: Finding[];
   /** Aggregate counts by severity. */
   summary: { errors: number; warnings: number; infos: number };
-  /** Generated Tailwind CSS theme configuration. */
+  /**
+   * Tailwind v3 theme.extend config object.
+   * @deprecated Prefer `tailwindV4Config` for new projects using Tailwind v4.
+   */
   tailwindConfig: TailwindEmitterResult;
+  /**
+   * Tailwind v4 CSS-variable theme data.
+   * Serialize to an `@theme { ... }` CSS block with `serializeTailwindV4(report.tailwindV4Config.data.theme)`.
+   * Check `result.success` before accessing `.data`.
+   */
+  tailwindV4Config: TailwindV4EmitterResult;
   /** Markdown heading names found in the document. */
   sections: string[];
   /** The partitioned document sections. */
@@ -46,17 +57,19 @@ export interface LintReport {
  * Lint a DESIGN.md document.
  *
  * Parses the markdown, resolves all design tokens into a typed model,
- * runs lint rules, and generates a Tailwind CSS theme configuration.
+ * runs lint rules, and generates Tailwind CSS theme configurations for
+ * both v3 (theme.extend JSON) and v4 (@theme CSS-variable format).
  *
  * @param content - Raw DESIGN.md content (markdown with YAML frontmatter or code blocks)
  * @param options - Optional configuration (custom rules, etc.)
- * @returns A LintReport with the resolved design system, findings, and Tailwind config
+ * @returns A LintReport with the resolved design system, findings, and Tailwind configs
  * @throws If parsing or model resolution fails unrecoverably
  */
 export function lint(content: string, options?: LintOptions): LintReport {
   const parser = new ParserHandler();
   const model = new ModelHandler();
   const tailwind = new TailwindEmitterHandler();
+  const tailwindV4 = new TailwindV4EmitterHandler();
 
   const parseResult = parser.execute({ content });
 
@@ -79,6 +92,7 @@ export function lint(content: string, options?: LintOptions): LintReport {
         }],
         summary: { errors: 0, warnings: 1, infos: 0 },
         tailwindConfig: tailwind.execute(designSystem),
+        tailwindV4Config: tailwindV4.execute(designSystem),
         sections: sections.map(s => s.heading).filter(Boolean),
         documentSections: sections,
       };
@@ -91,6 +105,7 @@ export function lint(content: string, options?: LintOptions): LintReport {
   const { designSystem, findings: modelFindings } = model.execute(parseResult.data);
   const lintResult = runLinter(designSystem, options?.rules);
   const tailwindConfig = tailwind.execute(designSystem);
+  const tailwindV4Config = tailwindV4.execute(designSystem);
 
   const findings = [...modelFindings, ...lintResult.findings];
   const summary = {
@@ -104,6 +119,7 @@ export function lint(content: string, options?: LintOptions): LintReport {
     findings,
     summary,
     tailwindConfig,
+    tailwindV4Config,
     sections: parseResult.data.sections ?? [],
     documentSections: parseResult.data.documentSections ?? [],
   };
